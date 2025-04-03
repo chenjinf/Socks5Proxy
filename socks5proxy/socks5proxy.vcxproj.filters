@@ -24,12 +24,90 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="AdapterInformation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DKTraces.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalTun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HexStr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MemList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="proto.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tap-windows.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XyzRoute.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XyzTun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="sockbase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ITunDataRead.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Sock5Client.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SessioId.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DatapacketDefine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Socks5Session.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TunFactory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="socks5proxy.cpp">
+    <ClCompile Include="AdapterInformation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalTun.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HexStr.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MemList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="proto.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sockbase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XyzRoute.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sock5Client.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Socks5Session.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TunFactory.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

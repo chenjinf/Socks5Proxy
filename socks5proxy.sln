@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "socks5proxy", "socks5proxy\socks5proxy.vcxproj", "{B8CBEF9C-8971-40D7-BAC3-05A7DB5C41A6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DKUtil", "DKUtil\DKUtil.vcxproj", "{2B4C0980-EE95-4FC9-91D5-07829072C416}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,12 @@ Global
 		{B8CBEF9C-8971-40D7-BAC3-05A7DB5C41A6}.Release|x64.Build.0 = Release|x64
 		{B8CBEF9C-8971-40D7-BAC3-05A7DB5C41A6}.Release|x86.ActiveCfg = Release|Win32
 		{B8CBEF9C-8971-40D7-BAC3-05A7DB5C41A6}.Release|x86.Build.0 = Release|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Debug|x64.ActiveCfg = Debug|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Debug|x86.ActiveCfg = Debug|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Debug|x86.Build.0 = Debug|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Release|x64.ActiveCfg = Release|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Release|x86.ActiveCfg = Release|Win32
+		{2B4C0980-EE95-4FC9-91D5-07829072C416}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
