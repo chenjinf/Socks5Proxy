@@ -51,6 +51,55 @@ inline uint16_t calculate_checksum(const void* data, size_t length, uint32_t ini
 	return static_cast<uint16_t>(~sum);
 }
 
+// TCP校验和（含伪头部）
+inline uint16_t tcp_checksum(
+	uint32_t src_ip,
+	uint32_t dst_ip,
+	const uint8_t* tcp_segment,
+	uint16_t tcp_len
+) {
+	struct pseudo_header {
+		uint32_t src_ip;
+		uint32_t dst_ip;
+		uint8_t  zero = 0;
+		uint8_t  protocol = IPPROTO_TCP;
+		uint16_t tcp_length;
+	} ph;
+
+	ph.src_ip = src_ip;
+	ph.dst_ip = dst_ip;
+	ph.tcp_length = htons(tcp_len);
+
+	// 计算伪头部+TCP头部的校验和
+	uint32_t sum = 0;
+
+	// 伪头部部分
+	const uint16_t* ptr = reinterpret_cast<const uint16_t*>(&ph);
+	for (size_t i = 0; i < sizeof(ph) / 2; ++i) {
+		sum += ptr[i];
+		if (sum & 0x80000000)
+			sum = (sum & 0xFFFF) + (sum >> 16);
+	}
+
+	// TCP数据部分
+	ptr = reinterpret_cast<const uint16_t*>(tcp_segment);
+	size_t len = tcp_len;
+	for (; len > 1; len -= 2) {
+		sum += *ptr++;
+		if (sum & 0x80000000)
+			sum = (sum & 0xFFFF) + (sum >> 16);
+	}
+
+	// 处理奇数字节
+	if (len) {
+		sum += *reinterpret_cast<const uint8_t*>(ptr);
+		if (sum & 0x80000000)
+			sum = (sum & 0xFFFF) + (sum >> 16);
+	}
+
+	return static_cast<uint16_t>(~sum);
+}
+
 inline std::vector<uint8_t> build_response_packet(
 	const boost::asio::ip::address_v4& client_ip,
 	uint16_t client_port,

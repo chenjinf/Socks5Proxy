@@ -3,6 +3,7 @@
 #include "DatapacketDefine.h"
 #include "proto.h"
 #include "Sock5Client.h"
+#include <random>
 Socks5Session::Socks5Session(boost::asio::io_context& io, SessionID id, const ProxyConfig& proxy_config, const TargetEndpoint& target, DataCallback callback /* 新增回调参数 */)
 	:io_context_(io),
 	id_(id),
@@ -13,6 +14,11 @@ Socks5Session::Socks5Session(boost::asio::io_context& io, SessionID id, const Pr
 	data_callback_(callback)  // 存储回调
 {
 	target_address_str_ = target.address.to_string();
+	// 生成随机的初始序列号
+	/*std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<uint32_t> dis(0, UINT32_MAX);
+	id_.server_seq = dis(gen);*/
 }
 
 Socks5Session::~Socks5Session()
@@ -59,8 +65,6 @@ void Socks5Session::forward_data(const uint8_t* data, size_t size)
 	const openvpn_iphdr* ip = reinterpret_cast<const openvpn_iphdr*>(data);
 	const openvpn_tcphdr* tcp = reinterpret_cast<const openvpn_tcphdr*>(data + sizeof(openvpn_iphdr));
 
-	
-
 	// 假设 packet 是完整的 IP 数据包
 	const uint8_t* ip_header = data;
 	size_t ip_header_len = (ip_header[0] & 0x0F) * 4;  // IPv4 头长度
@@ -70,25 +74,49 @@ void Socks5Session::forward_data(const uint8_t* data, size_t size)
 
 	const uint8_t* app_data = tcp_header + tcp_header_len;  // 应用数据起始位置
 	size_t app_data_size = size - ip_header_len - tcp_header_len;  // 应用数据大小
-	if (app_data_size <= 0)
-	{
-		return;
-	}
-	auto getdata = std::make_shared<std::vector<uint8_t>>();
-	getdata->insert(getdata->begin(), app_data, app_data + app_data_size);
-	//hexdump(getdata);
+	//if (app_data_size <= 0)
+	//{
+	//	return;
+	//}
+	//auto getdata = std::make_shared<std::vector<uint8_t>>();
+	//getdata->insert(getdata->begin(), app_data, app_data + app_data_size);
+	////hexdump(getdata);
 
-	// 更新客户端序列号和确认号
-	id_.client_seq = ntohl(tcp->seq) + app_data_size; // 正确递增
-	id_.client_ack = ntohl(tcp->ack_seq);
-	
-	// 将数据加入发送队列
-	bool write_in_progress = !send_queue_.empty();
-	send_queue_.emplace(app_data, app_data + app_data_size);
+	//// 更新客户端序列号和确认号
+	//id_.client_seq = ntohl(tcp->seq) + app_data_size; // 正确递增
+	//id_.client_ack = ntohl(tcp->ack_seq);
+	//
+	//// 将数据加入发送队列
+	//bool write_in_progress = !send_queue_.empty();
+	//send_queue_.emplace(app_data, app_data + app_data_size);
 
-	if (!write_in_progress) {
-		start_async_write();
+	//if (!write_in_progress) {
+	//	start_async_write();
+	//}
+
+	bool is_pure_ack = (app_data_size == 0) && (tcp->flags & OPENVPN_TCPH_ACK_MASK);
+
+	if (app_data_size > 0 || is_pure_ack) {
+		// 更新序列号逻辑（包括处理纯ACK）
+		if (tcp->flags & OPENVPN_TCPH_SYN_MASK) {
+			id_.client_seq = ntohl(tcp->seq) + 1; // SYN占一个序号
+		}
+		else {
+			id_.client_seq = ntohl(tcp->seq) + app_data_size;
+		}
+		id_.client_ack = ntohl(tcp->ack_seq);
+
+		// 转发整个TCP包（或仅ACK）
+		auto packet = std::make_shared<std::vector<uint8_t>>(data, data + size);
+		bool write_in_progress = !send_queue_.empty();
+		send_queue_.emplace(packet->begin(),packet->end());
+
+		if (!write_in_progress) {
+			start_async_write();
+		}
 	}
+
+
 }
 
 void Socks5Session::start()
@@ -240,7 +268,7 @@ void Socks5Session::async_read_connect_response()
 {
 	async_read_packet(
 		4, // 最小响应头长度
-		[self = shared_from_this()](boost::system::error_code ec, size_t) {
+	[self = shared_from_this()](boost::system::error_code ec, size_t) {
 		if (!ec) {
 			// 验证基础响应
 			if (self->read_buffer_[0] != 0x05 ||
@@ -268,7 +296,7 @@ void Socks5Session::async_read_connect_response()
 
 			// 继续读取剩余响应
 			self->async_read_packet(
-				self->expected_response_size_ - 4,
+				self->expected_response_size_,
 				[self](boost::system::error_code ec, size_t) {
 				if (!ec) {
 					self->state_ = State::Established;
@@ -285,11 +313,101 @@ void Socks5Session::async_read_connect_response()
 	});
 }
 
+std::vector<boost::uint8_t> Socks5Session::build_syn_ack(
+	uint32_t client_ip, /* 客户端IP（网络字节序） */
+	uint32_t server_ip, /* 服务器IP（网络字节序） */
+	uint16_t client_port, /* 客户端端口（主机字节序） */ 
+	uint16_t server_port, /* 服务器端口（主机字节序） */ 
+	uint32_t client_isn, /* 客户端的初始序列号 */ 
+	uint32_t server_isn /* 服务器的初始序列号 */)
+{
+
+	// ========================
+	// 1. 定义TCP选项内容（对齐到4字节）
+	// ========================
+	const uint8_t tcp_options[] = {
+		0x02, 0x04, 0x05, 0xB4,    // MSS选项：1460 (0x05B4)
+		0x01, 0x01,           // NOP填充使总长度8字节
+		0x04, 0x02, 0x01,               // SACK_PERM选项
+		0x03, 0x03, 0x0A          // 窗口缩放因子1024 (2^10)
+	};
+	const int options_len = sizeof(tcp_options); // 12字节
+
+	// 预分配数据包内存（IP头 + TCP头 + 选项）
+	std::vector<uint8_t> packet(sizeof(openvpn_iphdr) + sizeof(openvpn_tcphdr) + options_len);
+	// 构造IP头部
+	openvpn_iphdr* iph = reinterpret_cast<openvpn_iphdr*>(packet.data());
+	memset(iph, 0, sizeof(openvpn_iphdr)); // 清零
+	iph->version_len = 0x45;       // IPv4 + 5 words header
+	iph->tos = 0;
+	iph->tot_len = htons(sizeof(openvpn_iphdr) + sizeof(openvpn_tcphdr) + options_len);
+	iph->id = 0;       // 随机标识符
+	iph->frag_off = htons(0x4000); // Don't fragment
+	iph->ttl = 64;
+	iph->protocol = IPPROTO_TCP;
+	iph->check = 0;             // 先置零后续计算
+	iph->saddr = server_ip;
+	iph->daddr = client_ip;
+
+	// 构造TCP头部
+	openvpn_tcphdr* tcph = reinterpret_cast<openvpn_tcphdr*>(packet.data() + sizeof(openvpn_iphdr));
+	tcph->source = htons(server_port);
+	tcph->dest = htons(client_port);
+	tcph->seq = htonl(server_isn);
+	tcph->ack_seq = htonl(client_isn + 1); // SYN包的seq+1
+	// 头部长度计算（包含选项）
+	const uint8_t tcp_header_len = (sizeof(openvpn_tcphdr) + options_len) / 4;
+	tcph->doff_res = tcp_header_len << 4;  // 数据偏移字段
+	tcph->flags = OPENVPN_TCPH_SYN_MASK|OPENVPN_TCPH_ACK_MASK; // 数据偏移5 words + SYN+ACK标志
+	tcph->window = htons(42340);
+	tcph->check = 0;            // 先置零后续计算
+	tcph->urg_ptr = 0;
+
+	// 计算IP校验和
+	iph->check = calculate_checksum(reinterpret_cast<uint8_t*>(iph), sizeof(openvpn_iphdr));
+
+	// 填充TCP选项
+	uint8_t* options_ptr = reinterpret_cast<uint8_t*>(tcph) + sizeof(openvpn_tcphdr);
+	std::memcpy(options_ptr, tcp_options, options_len);
+
+	// 计算TCP校验和（包含伪头部）
+	uint16_t tcp_len = sizeof(openvpn_tcphdr) + options_len;
+	tcph->check = tcp_checksum(
+		server_ip,
+		client_ip,
+		reinterpret_cast<uint8_t*>(tcph),
+		tcp_len
+	);
+
+	return packet;
+}
+
+
 void Socks5Session::on_connection_established()
 {
 	// 此处应触发上层回调，开始数据转发
 	//std::cout << "SOCKS5 tunnel established to "
 		//<< target_address_str_ << ":" << target_.port << "\n";
+
+		// 构造SYN-ACK包
+	std::vector<uint8_t> syn_ack_packet = build_syn_ack(
+		htonl(boost::asio::ip::address_v4(id_.src_ip.v4).to_uint()),
+		htonl(boost::asio::ip::address_v4(id_.dst_ip.v4).to_uint()),
+		id_.src_port,
+		id_.dst_port,
+		id_.client_seq,
+		id_.server_seq
+	);
+
+	// 发送SYN-ACK给客户端
+	if (data_callback_) {
+		data_callback_(syn_ack_packet.data(), syn_ack_packet.size());
+	}
+
+	// 更新服务器序列号（SYN占用1个序号）
+	id_.server_seq += 1;
+
+
 
 	// 启动双向异步读写
 	start_async_write();

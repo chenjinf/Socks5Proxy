@@ -26,7 +26,7 @@
 
 
 
-std::unordered_map<IpFragmentKey, FragmentData> fragment_cache;
+//std::unordered_map<IpFragmentKey, FragmentData> fragment_cache;
 
 
 CGlobalTun::CGlobalTun()
@@ -234,119 +234,6 @@ static void CallRouteAddCmd(const std::string& dst, const std::string& mask, con
 	// switch(dwRet) ...
 }
 
-//void CGlobalTun::DoCreateClient()
-//{
-//	DKTRACEA("Tun设备的配置,IP: %s, 目标（网关?）: %s, DNS1：%s, DNS2：%s\n", IPTypeToString(m_TunEthIP).c_str(), IPTypeToString(m_TunEthNextHop).c_str(), IPTypeToString(m_TunEthDNS1).c_str(), IPTypeToString(m_TunEthDNS2).c_str());
-//	if (!OpenTun(m_TunEthIP, m_TunEthNextHop, m_TunEthDNS1, m_TunEthDNS2))
-//	{
-//		// Note: 无论何时返回都要确保下面这个事件被设置，否则另外一个线程会一直等待。
-//		SetEvent(m_hEventClientCreate);
-//		return;
-//	}
-//
-//	// 读取TAP的IP，等它完成配置IP的操作。
-//	int nCnt = 0;
-//	BOOL TapIPHaveSet = FALSE;
-//	do
-//	{
-//		Sleep(100);
-//		nCnt++;
-//		if (AdapterInfo::IsSetTapIp(m_TunEthIP, m_nTapIndex))
-//		{
-//			TapIPHaveSet = TRUE;
-//			break;
-//		}
-//	} while (nCnt < 40);
-//	DKTRACEA("IP配置耗费时间: %d ms\n", nCnt * 100);
-//	if (!TapIPHaveSet)
-//	{
-//		DKTRACEA("错误！IP配置发生超时错误了。\n");
-//		if (m_hFileTun != INVALID_HANDLE_VALUE)
-//		{
-//			SetTapConnected(FALSE);
-//			CloseHandle(m_hFileTun);
-//			m_hFileTun = INVALID_HANDLE_VALUE;
-//		}
-//		SetEvent(m_hEventClientCreate);
-//		return;
-//	}
-//	CxyzRoute::DeleteAllRouteIndex(m_nTapIndex);
-//	if (qcutil::IsOsWindowsVistaorLater())
-//	{
-//		CxyzRoute::set_interface_metric(m_nTapIndex, AF_INET, BLOCK_DNS_IFACE_METRIC);
-//	}
-//
-//	//if (m_TunEthIP != LOCALHOST_INT)
-//	//{
-//	//	// 这里有个疑问：为内网IP"10.100.0.6"指定下一跳的地址为"10.100.0.5"有意义吗？
-//	//	CxyzRoute::AddRoute(m_TunEthIP, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
-//	//	CxyzRoute::AddRoute(GetHostID(TranferRouteDisk3(m_TunEthNextHop).c_str()), GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
-//	//}
-//
-//	if (m_bDefGetWayClient)
-//	{
-//		if (qcutil::IsOsWindowsVistaorLater())
-//		{
-//			if (!CxyzRoute::AddRoute(0, 0, m_TunEthNextHop, m_nTapIndex))
-//			{
-//				DKTRACEA("警告！使用AddRoute方法添加路由表失败了！\n");
-//				// 使用CxyzRoute::AddRoute添加路由表失败了，改为使用route.exe添加。
-//				CallRouteAddCmd("0.0.0.0", "0.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
-//				CallRouteAddCmd("0.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
-//			}
-//			else
-//			{
-//				CxyzRoute::AddRoute(0, GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
-//			}
-//
-//			//CallRouteAddCmd("8.8.4.4", "255.255.255.255", IPTypeToString(m_TunEthIP), 2, m_nTapIndex);
-//			//CallRouteAddCmd("8.8.8.8", "255.255.255.255", IPTypeToString(m_TunEthIP), 2, m_nTapIndex);
-//			
-//			//CxyzRoute::AddRoute(GetHostID("8.8.4.4"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
-//			//CxyzRoute::AddRoute(GetHostID("8.8.8.8"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
-//			//CxyzRoute::AddRoute(GetHostID(TranferRouteDisk(m_TunEthNextHop).c_str()), GetHostID("255.255.255.0"), m_TunEthIP, m_nTapIndex);
-//			
-//			CallRouteAddCmd(TranferRouteDisk(m_TunEthIP).c_str(), "255.255.255.0", IPTypeToString(m_TunEthIP), 254, m_nTapIndex);
-//			CallRouteAddCmd(IPTypeToString(m_TunEthIP), "255.255.255.255", IPTypeToString(m_TunEthIP), 254, m_nTapIndex);
-//			CallRouteAddCmd(TranferRouteDisk3(m_TunEthIP).c_str(), "255.255.255.255", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
-//
-//			//CallRouteAddCmd("119.28.28.28", "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
-//			//CallRouteAddCmd("119.29.29.29", "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
-//			
-//			CallRouteAddCmd(m_strServerIP, "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
-//			
-//			//CxyzRoute::AddRoute(GetHostID("119.28.28.28"), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
-//			//::AddRoute(GetHostID("119.29.29.29"), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
-//
-//			//CxyzRoute::AddRoute(GetHostID(m_strServerIP.c_str()), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
-//			CxyzRoute::AddRoute(GetHostID("128.0.0.0"), GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
-//
-//			CallRouteAddCmd("224.0.0.0", "224.0.0.0", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
-//			CallRouteAddCmd("255.255.255.255", "255.255.255.255", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
-//
-//			//CxyzRoute::AddRoute(GetHostID("224.0.0.0"), GetHostID("224.0.0.0"), m_TunEthNextHop, m_nTapIndex);
-//			//CxyzRoute::AddRoute(GetHostID("255.255.255.255"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
-//			//CxyzRoute::AddRoute(GetHostID(m_strServerIP.c_str()), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
-//		}
-//		else
-//		{
-//			//XP系统
-//			//Sleep(5000);
-//			CallRouteAddCmd("128.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
-//			CallRouteAddCmd("0.0.0.0", "0.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
-//			CallRouteAddCmd("0.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
-//			CallRouteAddCmd(TranferRouteDisk(m_TunEthNextHop), "255.255.255.255", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
-//			//CallRouteAddCmd(TranferRouteDisk2(m_TunEthNextHop), "255.255.255.252", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
-//			CallRouteAddCmd(IPTypeToString(m_TunEthIP), "255.255.255.255", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
-//			//CallRouteAddCmd(m_strServerIP, "255.255.255.255", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
-//		}
-//	}
-//
-//	m_bIsReady = TRUE;
-//	SetEvent(m_hEventClientCreate);
-//	OnReadTun();
-//}
-
 void CGlobalTun::DoCreateClient()
 {
 	DKTRACEA("Tun设备的配置,IP: %s, 目标（网关?）: %s, DNS1：%s, DNS2：%s\n", IPTypeToString(m_TunEthIP).c_str(), IPTypeToString(m_TunEthNextHop).c_str(), IPTypeToString(m_TunEthDNS1).c_str(), IPTypeToString(m_TunEthDNS2).c_str());
@@ -389,11 +276,12 @@ void CGlobalTun::DoCreateClient()
 		CxyzRoute::set_interface_metric(m_nTapIndex, AF_INET, BLOCK_DNS_IFACE_METRIC);
 	}
 
-	if (m_TunEthIP != LOCALHOST_INT)
-	{
-		// 这里有个疑问：为内网IP"10.100.0.6"指定下一跳的地址为"10.100.0.5"有意义吗？
-		CxyzRoute::AddRoute(m_TunEthIP, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
-	}
+	//if (m_TunEthIP != LOCALHOST_INT)
+	//{
+	//	// 这里有个疑问：为内网IP"10.100.0.6"指定下一跳的地址为"10.100.0.5"有意义吗？
+	//	CxyzRoute::AddRoute(m_TunEthIP, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
+	//	CxyzRoute::AddRoute(GetHostID(TranferRouteDisk3(m_TunEthNextHop).c_str()), GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
+	//}
 
 	if (m_bDefGetWayClient)
 	{
@@ -411,10 +299,34 @@ void CGlobalTun::DoCreateClient()
 				CxyzRoute::AddRoute(0, GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
 			}
 
-			CxyzRoute::AddRoute(GetHostID(TranferRouteDisk(m_TunEthNextHop).c_str()), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
-			//CxyzRoute::AddRoute(GetHostID(TranferRouteDisk2(m_TunEthNextHop).c_str()), GetHostID("255.255.255.252"), m_TunEthIP, m_nTapIndex);
-			CxyzRoute::AddRoute(m_TunEthNextHop, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
+			//CallRouteAddCmd("8.8.4.4", "255.255.255.255", IPTypeToString(m_TunEthIP), 2, m_nTapIndex);
+			//CallRouteAddCmd("8.8.8.8", "255.255.255.255", IPTypeToString(m_TunEthIP), 2, m_nTapIndex);
+			
+			//CxyzRoute::AddRoute(GetHostID("8.8.4.4"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
+			//CxyzRoute::AddRoute(GetHostID("8.8.8.8"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
+			//CxyzRoute::AddRoute(GetHostID(TranferRouteDisk(m_TunEthNextHop).c_str()), GetHostID("255.255.255.0"), m_TunEthIP, m_nTapIndex);
+			
+			CallRouteAddCmd(TranferRouteDisk(m_TunEthIP).c_str(), "255.255.255.0", IPTypeToString(m_TunEthIP), 254, m_nTapIndex);
+			CallRouteAddCmd(IPTypeToString(m_TunEthIP), "255.255.255.255", IPTypeToString(m_TunEthIP), 254, m_nTapIndex);
+			CallRouteAddCmd(TranferRouteDisk3(m_TunEthIP).c_str(), "255.255.255.255", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
+
+			//CallRouteAddCmd("119.28.28.28", "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
+			//CallRouteAddCmd("119.29.29.29", "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
+			
+			CallRouteAddCmd(m_strServerIP, "255.255.255.255", IPTypeToString(m_defaultIP.defaultGateway), 101, m_defaultIP.index_);
+			
+			//CxyzRoute::AddRoute(GetHostID("119.28.28.28"), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
+			//::AddRoute(GetHostID("119.29.29.29"), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
+
+			//CxyzRoute::AddRoute(GetHostID(m_strServerIP.c_str()), GetHostID("255.255.255.255"), m_defaultIP.defaultGateway, m_defaultIP.index_);
 			CxyzRoute::AddRoute(GetHostID("128.0.0.0"), GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
+
+			CallRouteAddCmd("224.0.0.0", "224.0.0.0", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
+			CallRouteAddCmd("255.255.255.255", "255.255.255.255", IPTypeToString(m_TunEthIP), 252, m_nTapIndex);
+
+			//CxyzRoute::AddRoute(GetHostID("224.0.0.0"), GetHostID("224.0.0.0"), m_TunEthNextHop, m_nTapIndex);
+			//CxyzRoute::AddRoute(GetHostID("255.255.255.255"), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
+			//CxyzRoute::AddRoute(GetHostID(m_strServerIP.c_str()), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
 		}
 		else
 		{
@@ -426,19 +338,7 @@ void CGlobalTun::DoCreateClient()
 			CallRouteAddCmd(TranferRouteDisk(m_TunEthNextHop), "255.255.255.255", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
 			//CallRouteAddCmd(TranferRouteDisk2(m_TunEthNextHop), "255.255.255.252", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
 			CallRouteAddCmd(IPTypeToString(m_TunEthIP), "255.255.255.255", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
-		}
-	}
-
-	// 设置合理的MTU（避免分片）
-	if (qcutil::IsOsWindowsVistaorLater()) {
-		std::string mtu_cmd = "netsh interface ipv4 set subinterface " +
-			std::to_string(m_nTapIndex) +
-			" mtu=1500 store=persistent";
-		std::string ret;
-		DWORD dwRet = qcutil::subprocess::CreateProcessEx(mtu_cmd, ret);
-		if (!ret.empty())
-		{
-			DKTRACEA("%s\n", ret.c_str());
+			//CallRouteAddCmd(m_strServerIP, "255.255.255.255", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
 		}
 	}
 
@@ -446,6 +346,106 @@ void CGlobalTun::DoCreateClient()
 	SetEvent(m_hEventClientCreate);
 	OnReadTun();
 }
+
+//void CGlobalTun::DoCreateClient()
+//{
+//	DKTRACEA("Tun设备的配置,IP: %s, 目标（网关?）: %s, DNS1：%s, DNS2：%s\n", IPTypeToString(m_TunEthIP).c_str(), IPTypeToString(m_TunEthNextHop).c_str(), IPTypeToString(m_TunEthDNS1).c_str(), IPTypeToString(m_TunEthDNS2).c_str());
+//	if (!OpenTun(m_TunEthIP, m_TunEthNextHop, m_TunEthDNS1, m_TunEthDNS2))
+//	{
+//		// Note: 无论何时返回都要确保下面这个事件被设置，否则另外一个线程会一直等待。
+//		SetEvent(m_hEventClientCreate);
+//		return;
+//	}
+//
+//	// 读取TAP的IP，等它完成配置IP的操作。
+//	int nCnt = 0;
+//	BOOL TapIPHaveSet = FALSE;
+//	do
+//	{
+//		Sleep(100);
+//		nCnt++;
+//		if (AdapterInfo::IsSetTapIp(m_TunEthIP, m_nTapIndex))
+//		{
+//			TapIPHaveSet = TRUE;
+//			break;
+//		}
+//	} while (nCnt < 40);
+//	DKTRACEA("IP配置耗费时间: %d ms\n", nCnt * 100);
+//	if (!TapIPHaveSet)
+//	{
+//		DKTRACEA("错误！IP配置发生超时错误了。\n");
+//		if (m_hFileTun != INVALID_HANDLE_VALUE)
+//		{
+//			SetTapConnected(FALSE);
+//			CloseHandle(m_hFileTun);
+//			m_hFileTun = INVALID_HANDLE_VALUE;
+//		}
+//		SetEvent(m_hEventClientCreate);
+//		return;
+//	}
+//	CxyzRoute::DeleteAllRouteIndex(m_nTapIndex);
+//	if (qcutil::IsOsWindowsVistaorLater())
+//	{
+//		CxyzRoute::set_interface_metric(m_nTapIndex, AF_INET, BLOCK_DNS_IFACE_METRIC);
+//	}
+//
+//	if (m_TunEthIP != LOCALHOST_INT)
+//	{
+//		// 这里有个疑问：为内网IP"10.100.0.6"指定下一跳的地址为"10.100.0.5"有意义吗？
+//		CxyzRoute::AddRoute(m_TunEthIP, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
+//	}
+//
+//	if (m_bDefGetWayClient)
+//	{
+//		if (qcutil::IsOsWindowsVistaorLater())
+//		{
+//			if (!CxyzRoute::AddRoute(0, 0, m_TunEthNextHop, m_nTapIndex))
+//			{
+//				DKTRACEA("警告！使用AddRoute方法添加路由表失败了！\n");
+//				// 使用CxyzRoute::AddRoute添加路由表失败了，改为使用route.exe添加。
+//				CallRouteAddCmd("0.0.0.0", "0.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
+//				CallRouteAddCmd("0.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
+//			}
+//			else
+//			{
+//				CxyzRoute::AddRoute(0, GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
+//			}
+//
+//			CxyzRoute::AddRoute(GetHostID(TranferRouteDisk(m_TunEthNextHop).c_str()), GetHostID("255.255.255.255"), m_TunEthNextHop, m_nTapIndex);
+//			//CxyzRoute::AddRoute(GetHostID(TranferRouteDisk2(m_TunEthNextHop).c_str()), GetHostID("255.255.255.252"), m_TunEthIP, m_nTapIndex);
+//			CxyzRoute::AddRoute(m_TunEthNextHop, GetHostID("255.255.255.255"), m_TunEthIP, m_nTapIndex);
+//			CxyzRoute::AddRoute(GetHostID("128.0.0.0"), GetHostID("128.0.0.0"), m_TunEthNextHop, m_nTapIndex);
+//		}
+//		else
+//		{
+//			//XP系统
+//			//Sleep(5000);
+//			CallRouteAddCmd("128.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
+//			CallRouteAddCmd("0.0.0.0", "0.0.0.0", IPTypeToString(m_TunEthNextHop), 3, m_nTapIndex);
+//			CallRouteAddCmd("0.0.0.0", "128.0.0.0", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
+//			CallRouteAddCmd(TranferRouteDisk(m_TunEthNextHop), "255.255.255.255", IPTypeToString(m_TunEthNextHop), 1, m_nTapIndex);
+//			//CallRouteAddCmd(TranferRouteDisk2(m_TunEthNextHop), "255.255.255.252", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
+//			CallRouteAddCmd(IPTypeToString(m_TunEthIP), "255.255.255.255", IPTypeToString(m_TunEthIP), 1, m_nTapIndex);
+//		}
+//	}
+//
+//	// 设置合理的MTU（避免分片）
+//	if (qcutil::IsOsWindowsVistaorLater()) {
+//		std::string mtu_cmd = "netsh interface ipv4 set subinterface " +
+//			std::to_string(m_nTapIndex) +
+//			" mtu=1500 store=persistent";
+//		std::string ret;
+//		DWORD dwRet = qcutil::subprocess::CreateProcessEx(mtu_cmd, ret);
+//		if (!ret.empty())
+//		{
+//			DKTRACEA("%s\n", ret.c_str());
+//		}
+//	}
+//
+//	m_bIsReady = TRUE;
+//	SetEvent(m_hEventClientCreate);
+//	OnReadTun();
+//}
 
 void CGlobalTun::WorkerThread()
 {
@@ -542,155 +542,20 @@ void CGlobalTun::StartAsyncRead(TapAsyncContext* ctx)
 
 bool CGlobalTun::ProcessDataFromTun(void *buf, UINT dwRead)
 {
-	/*if (m_TcpMss > 0)
+	if (m_TcpMss > 0)
 	{
 		static CAutoMem mem;
 		mem.Attach(buf, dwRead);
 		mss_fixup_ipv4((BYTE*)buf, dwRead, m_TcpMss);
-	} */  
-	struct openvpn_iphdr* ip = reinterpret_cast<openvpn_iphdr*>(buf);
+	}  
 
-	// 检查是否是分片包
-	if ((ntohs(ip->frag_off) & 0x1FFF) != 0 || (ntohs(ip->frag_off) & 0x2000)) {
-		return HandleIpFragment(ip, dwRead);
-	}
-	else {
-		// 处理完整包
-		m_pReadInterface->OnReadTun(reinterpret_cast<BYTE*>(buf), dwRead);
-		return true;
-	}
-}
+	// HSDL中有下面这个调用，用于判断是否是SS端口返回的数据。HSDL实际上没有用到，我们这里也用不到。
+	//if (IsLocalReturnPack((byte*)buf, dwRead)==TRUE)
+	m_pReadInterface->OnReadTun((BYTE*)buf, (int)dwRead);
 
-void CGlobalTun::StartFragmentCleanupThread()
-{
-	std::thread([this]() {
-		while (!m_bQuit) {
-			std::this_thread::sleep_for(std::chrono::seconds(30));
-			auto now = std::chrono::steady_clock::now();
-
-			for (auto it = fragment_cache.begin(); it != fragment_cache.end();) {
-				// 清理超时30秒的条目
-				if (now - it->second.last_update > std::chrono::seconds(30)) {
-					current_cache_size -= it->second.received_bytes;
-					it = fragment_cache.erase(it);
-				}
-				else {
-					++it;
-				}
-			}
-		}
-	}).detach();
-}
-
-bool CheckAllFragmentsReceived(FragmentData& entry) {
-	// 简单实现：检查从0到最后一个标记是否全为true
-	for (size_t i = 0; i < entry.received.size(); ++i) {
-		if (!entry.received[i]) return false;
-	}
 	return true;
 }
 
-bool CGlobalTun::HandleIpFragment(struct openvpn_iphdr* ip, UINT dwRead)
-{
-	if (dwRead < sizeof(openvpn_iphdr)) {
-		DKTRACEA("无效数据包长度: %u\n", dwRead);
-		return false;
-	}
-	if (fragment_cache.size() > 10000) { // 防止DDoS攻击
-		DKTRACEA("分片缓存超过安全阈值，清空缓存\n");
-		fragment_cache.clear();
-		current_cache_size = 0;
-	}
-	const uint16_t frag_off = ntohs(ip->frag_off);
-	const uint16_t offset = (frag_off & 0x1FFF) * 8;  // 计算字节偏移
-	const bool is_last = (frag_off & 0x2000) == 0;    // 是否是最后分片
-
-													  // 计算数据块信息
-	const uint16_t block_idx = offset / FRAG_BLOCK_SIZE;
-	const uint16_t data_size = dwRead - sizeof(openvpn_iphdr);
-	const uint8_t* payload = reinterpret_cast<uint8_t*>(ip) + sizeof(openvpn_iphdr);
-
-													  // 生成缓存键
-	IpFragmentKey key{
-		ip->saddr,
-		ip->daddr,
-		ntohs(ip->id),
-		ip->protocol
-	};
-
-	auto& entry = fragment_cache[key];
-
-	// 初始化总长度和最大块索引
-	if (entry.total_length == 0) {
-		entry.total_length = ntohs(ip->tot_len);
-		if (entry.total_length == 0 || entry.total_length > 65535) {
-			fragment_cache.erase(key);
-			return false;
-		}
-		entry.max_block_idx = (entry.total_length - 1) / FRAG_BLOCK_SIZE;
-		entry.received.resize(entry.max_block_idx + 1, false);
-	}
-
-	// 验证 block_idx 有效性
-	if (block_idx > entry.max_block_idx) {
-		DKTRACEA("丢弃无效分片：block_idx=%u (max=%u)\n", block_idx, entry.max_block_idx);
-		return false;
-	}
-
-	// 强制更新数据（即使已接收）
-	entry.blocks[block_idx] = std::vector<uint8_t>(
-		reinterpret_cast<uint8_t*>(ip) + sizeof(openvpn_iphdr),
-		reinterpret_cast<uint8_t*>(ip) + sizeof(openvpn_iphdr) + data_size
-		);
-
-	// 更新状态
-	if (!entry.received[block_idx]) {
-		entry.received_bytes += data_size;
-		entry.received[block_idx] = true;
-		current_cache_size += data_size;
-	}
-
-	
-
-	// 检查重组条件
-	if (is_last && entry.is_complete()) {
-		// 重组完整数据包
-		std::vector<uint8_t> full_packet;
-		full_packet.reserve(entry.total_length);
-
-		// 按顺序合并数据块
-		uint16_t current_pos = 0;
-		for (uint16_t i = 0; i <= (entry.total_length - 1) / FRAG_BLOCK_SIZE; ++i) {
-			auto it = entry.blocks.find(i);
-			if (it != entry.blocks.end()) {
-				const auto& block = it->second;
-				const uint16_t copy_size = std::min<uint16_t>(
-					block.size(),
-					entry.total_length - current_pos
-					);
-
-				full_packet.insert(full_packet.end(),
-					block.begin(),
-					block.begin() + copy_size);
-				current_pos += copy_size;
-			}
-			else {
-				// 发现缺失块，重组失败
-				fragment_cache.erase(key);
-				return false;
-			}
-		}
-
-		// 传递重组后的数据
-		if (current_pos == entry.total_length) {
-			m_pReadInterface->OnReadTun(full_packet.data(), full_packet.size());
-			current_cache_size -= entry.received_bytes;
-			fragment_cache.erase(key);
-			return true;
-		}
-	}
-	return false;
-}
 
 void CGlobalTun::Init()
 {
@@ -1027,10 +892,10 @@ int CGlobalTun::GetTapMTU()
 		&mtu, sizeof(mtu),
 		&mtu, sizeof(mtu), &dwLen, NULL))
 	{
-		DKTRACEA("获得TAP-Windows MTU:%u\n", mtu);
+		//DKTRACEA("获得TAP-Windows MTU:%u\n", mtu);
 	}
 	else
-		DKTRACEA("获取TAP-Windows MTU失败，错误码%u。\n", GetLastError());
+		//DKTRACEA("获取TAP-Windows MTU失败，错误码%u。\n", GetLastError());
 	return mtu;
 }
 
@@ -1216,8 +1081,9 @@ void CGlobalTun::AsyncWrite(CAutoMem * pmem)
 {
 	auto ctx = new TapAsyncContext(m_hFileTun,2048,false);
 	std::copy(pmem->GetBuffer(), pmem->GetCurBuffer(), ctx->buffer.begin());
+	int bytelen = pmem->GetCurSeek();
 	DWORD bytesWritten;
-	if (!WriteFile(m_hFileTun, ctx->buffer.data(), static_cast<DWORD>(ctx->buffer.size()), &bytesWritten, &ctx->ov)) {
+	if (!WriteFile(m_hFileTun, ctx->buffer.data(), bytelen, &bytesWritten, &ctx->ov)) {
 		if (GetLastError() != ERROR_IO_PENDING) {
 			DKTRACEA("异步写入失败: %d", GetLastError());
 			delete ctx;

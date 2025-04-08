@@ -1,6 +1,6 @@
 #pragma once
 #define LOGGING_TO_FILE 0
-#define LOGGING_USING_STDIO
+//#define LOGGING_USING_STDIO
 //#define LOGGING_USING_DBGMSG
 #if LOGGING_TO_FILE
 #include "util/Logger.h"

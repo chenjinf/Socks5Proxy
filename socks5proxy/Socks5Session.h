@@ -51,6 +51,15 @@ private:
 	// 读取连接响应
 	void async_read_connect_response();
 
+	std::vector<uint8_t> build_syn_ack(
+		uint32_t client_ip,      // 客户端IP（网络字节序）
+		uint32_t server_ip,      // 服务器IP（网络字节序）
+		uint16_t client_port,    // 客户端端口（主机字节序）
+		uint16_t server_port,    // 服务器端口（主机字节序）
+		uint32_t client_isn,     // 客户端的初始序列号
+		uint32_t server_isn      // 服务器的初始序列号
+	);
+
 	// 连接建立成功后的处理
 	void on_connection_established();
 

@@ -28,51 +28,6 @@ struct TapAsyncContext {
 	}
 };
 
-// 分片块大小（通常为MTU - IP头 - 传输头）
-constexpr uint16_t FRAG_BLOCK_SIZE = 1480;  // 1500(MTU) - 20(IP) - 20(TCP)
-
-struct IpFragmentKey {
-	uint32_t src_ip;
-	uint32_t dst_ip;
-	uint16_t identification;
-	uint8_t protocol;
-
-	bool operator==(const IpFragmentKey& other) const {
-		return src_ip == other.src_ip &&
-			dst_ip == other.dst_ip &&
-			identification == other.identification &&
-			protocol == other.protocol;
-	}
-};
-
-namespace std {
-	template<> struct hash<IpFragmentKey> {
-		size_t operator()(const IpFragmentKey& k) const {
-			return hash<uint32_t>()(k.src_ip) ^
-				hash<uint32_t>()(k.dst_ip) ^
-				(hash<uint16_t>()(k.identification) << 1) ^
-				(hash<uint8_t>()(k.protocol) << 2);
-		}
-	};
-}
-
-struct FragmentData {
-	std::map<uint16_t, std::vector<uint8_t>> blocks;
-	std::vector<bool> received;  // 动态位图
-	uint16_t total_length = 0;
-	uint16_t received_bytes = 0;
-	uint16_t max_block_idx = 0;  // 最大有效块索引
-	std::chrono::steady_clock::time_point last_update;
-
-	bool is_complete() const {
-		if (total_length == 0) return false;
-		for (uint16_t i = 0; i <= max_block_idx; ++i) {
-			if (!received[i]) return false;
-		}
-		return received_bytes >= total_length;
-	}
-};
-
 
 class CGlobalTun:public IXyzTun
 {
@@ -106,11 +61,6 @@ private:
 	* 处理从tun中读取的数据，处理后使用ITunDataRead接口发往服务器。
 	*/
 	bool ProcessDataFromTun(void *buf, UINT dwRead);
-
-
-	void StartFragmentCleanupThread();
-
-	bool HandleIpFragment(struct openvpn_iphdr* ip, UINT dwRead);
 
 	/**
 	* 初始化。
@@ -176,10 +126,6 @@ private:
 	void mss_fixup_ipv4(BYTE *buf, int nBuflen, int maxmss);
 
 private:
-
-	std::unordered_map<IpFragmentKey, FragmentData> fragment_cache;
-	const size_t MAX_CACHE_SIZE = 100 * 1024 * 1024;  // 最大缓存100MB
-	size_t current_cache_size = 0;
 	DefaultIpinfo m_defaultIP;
 	std::atomic<BOOL> m_bQuit{FALSE};
 	BOOL m_bIsReady;

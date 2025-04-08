@@ -115,12 +115,15 @@ void CSock5Client::handle_tcp_packet(const uint8_t* data, size_t size)
 	{
 		return;
 	}*/
-	std::cout << "handle_tcp_packet, src_ip:" << boost::asio::ip::make_address_v4(id.src_ip.v4).to_string() <<
-		",port:" << id.src_port << ",dst_ip:" << boost::asio::ip::make_address_v4(id.dst_ip.v4).to_string() <<
-		",port:" << id.dst_port << "packet len:" << size <<"\n";
+	if (tc->flags & OPENVPN_TCPH_ACK_MASK)
+	{
+		std::cout << "handle_tcp_packet, src_ip:" << boost::asio::ip::make_address_v4(id.src_ip.v4).to_string() <<
+			",port:" << id.src_port << ",dst_ip:" << boost::asio::ip::make_address_v4(id.dst_ip.v4).to_string() <<
+			",port:" << id.dst_port << "packet len:" << size << "\n";
+	}
 	// 初始化序列号（如果是 SYN 包）
 	if (tc->flags & OPENVPN_TCPH_SYN_MASK) {
-		id.client_seq = ntohl(tc->seq) + 1; // SYN 占用 1 个序号
+		id.client_seq = ntohl(tc->seq); // SYN 占用 1 个序号
 		id.server_seq = generate_initial_seq(); // 随机生成初始序列号
 	}
 	// 访问时加锁
